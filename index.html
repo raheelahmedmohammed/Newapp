@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>StudyFlow — Smart Study Planner</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-icon">📚</span>
+        <span class="logo-text">StudyFlow</span>
+      </div>
+    </div>
+
+    <div class="sidebar-nav">
+      <button class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+        <span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span>
+      </button>
+      <button class="nav-item" data-view="progress" onclick="switchView('progress')">
+        <span class="nav-icon">📊</span><span class="nav-label">Progress</span>
+      </button>
+    </div>
+
+    <div class="sidebar-subjects">
+      <div class="section-label">
+        <span>MY SUBJECTS</span>
+        <button class="btn-add-subject" onclick="openAddSubjectModal()" title="Add Subject">+</button>
+      </div>
+      <div class="subjects-list" id="subjectsList">
+        <!-- Populated by JS -->
+      </div>
+      <div class="reorder-hint" id="reorderHint" style="display:none">
+        <span>⠿ Drag to reorder</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="streak-badge">
+        <span class="streak-flame">🔥</span>
+        <span id="streakText">Start your streak!</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="main" id="main">
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+        <h1 class="page-title" id="pageTitle">Dashboard</h1>
+      </div>
+      <div class="topbar-right">
+        <div class="session-timer" id="sessionTimerWrap">
+          <span class="timer-label">Session</span>
+          <span class="timer-display" id="sessionTimerDisplay">00:00:00</span>
+        </div>
+        <div class="date-chip" id="todayDate"></div>
+      </div>
+    </header>
+
+    <div class="content" id="content">
+
+      <!-- ===== DASHBOARD VIEW ===== -->
+      <div class="view" id="view-dashboard">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-icon">📚</div>
+            <div class="stat-value" id="statSubjects">0</div>
+            <div class="stat-label">Subjects</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📝</div>
+            <div class="stat-value" id="statTopics">0</div>
+            <div class="stat-label">Topics</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="statCompleted">0</div>
+            <div class="stat-label">Done</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⏱</div>
+            <div class="stat-value" id="statHours">0h</div>
+            <div class="stat-label">Studied</div>
+          </div>
+        </div>
+
+        <div class="view-section-title">Your Subjects
+          <button class="btn btn-primary btn-sm" onclick="openAddSubjectModal()" style="margin-left:auto">+ Add Subject</button>
+        </div>
+        <div class="subjects-grid" id="subjectsGrid"></div>
+
+        <div class="empty-state" id="emptyDash" style="display:none">
+          <div class="empty-icon">🎓</div>
+          <h3>Welcome to StudyFlow</h3>
+          <p>Organise your subjects, track topics, and time your study sessions — all in one place.</p>
+          <button class="btn btn-primary" onclick="openAddSubjectModal()">Add Your First Subject</button>
+        </div>
+      </div>
+
+      <!-- ===== SUBJECT DETAIL VIEW ===== -->
+      <div class="view" id="view-subject" style="display:none">
+        <div class="subject-hero" id="subjectHero">
+          <div class="subject-icon-wrap" id="subjectIconWrap"></div>
+          <div class="subject-info">
+            <h2 id="subjectDetailName"></h2>
+            <div class="subject-meta" id="subjectMeta"></div>
+          </div>
+          <div class="subject-actions">
+            <button class="btn btn-ghost btn-sm" onclick="openEditSubjectModal()">✏️ Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteCurrentSubject()">🗑 Delete</button>
+          </div>
+        </div>
+
+        <div class="subject-progress-wrap">
+          <div class="progress-track">
+            <div class="progress-fill" id="subjectProgressBar"></div>
+          </div>
+          <div class="progress-stats">
+            <span id="subjectProgressLabel"></span>
+            <span id="subjectTimeLabel"></span>
+          </div>
+        </div>
+
+        <div class="topics-box">
+          <div class="topics-box-header">
+            <span class="topics-box-title">Topics Checklist</span>
+            <button class="btn btn-primary btn-sm" onclick="openAddTopicModal()">+ Add Topic</button>
+          </div>
+
+          <div class="topics-guide">
+            <span class="guide-chip">▶ Start timer on any topic</span>
+            <span class="guide-chip">✓ Click circle to mark complete</span>
+            <span class="guide-chip">✕ Hover to delete</span>
+          </div>
+
+          <div id="topicsList"></div>
+          <div class="empty-topics" id="emptyTopics" style="display:none">
+            <p>No topics yet — add your first one above!</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PROGRESS VIEW ===== -->
+      <div class="view" id="view-progress" style="display:none">
+        <div class="view-section-title">Study Progress</div>
+        <div id="progressContent"></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ===== ACTIVE TIMER BANNER (injected by JS) ===== -->
+
+  <!-- ===== MODAL: Add/Edit Subject ===== -->
+  <div class="modal-overlay" id="modalSubject">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalSubjectTitle">Add Subject</h3>
+        <button class="modal-close" onclick="closeModal('modalSubject')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Subject Name</label>
+          <input type="text" id="inputSubjectName" placeholder="e.g. Mathematics" class="form-input"
+                 onkeydown="if(event.key==='Enter') saveSubject()">
+        </div>
+        <div class="form-group">
+          <label>Emoji Icon</label>
+          <div class="emoji-row">
+            <input type="text" id="inputSubjectIcon" class="form-input emoji-inp" maxlength="2" placeholder="📘">
+            <div class="emoji-grid">
+              <span onclick="pickEmoji('📘')">📘</span><span onclick="pickEmoji('🔬')">🔬</span>
+              <span onclick="pickEmoji('🖥️')">🖥️</span><span onclick="pickEmoji('📐')">📐</span>
+              <span onclick="pickEmoji('⚗️')">⚗️</span><span onclick="pickEmoji('📝')">📝</span>
+              <span onclick="pickEmoji('🌐')">🌐</span><span onclick="pickEmoji('🔧')">🔧</span>
+              <span onclick="pickEmoji('📊')">📊</span><span onclick="pickEmoji('🎨')">🎨</span>
+              <span onclick="pickEmoji('🧠')">🧠</span><span onclick="pickEmoji('⚡')">⚡</span>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Colour</label>
+          <div class="color-row" id="colorRow">
+            <div class="color-dot selected" data-color="#7C5CFC" style="background:#7C5CFC" onclick="pickColor('#7C5CFC',this)"></div>
+            <div class="color-dot" data-color="#2DD4BF" style="background:#2DD4BF" onclick="pickColor('#2DD4BF',this)"></div>
+            <div class="color-dot" data-color="#F59E0B" style="background:#F59E0B" onclick="pickColor('#F59E0B',this)"></div>
+            <div class="color-dot" data-color="#EF4444" style="background:#EF4444" onclick="pickColor('#EF4444',this)"></div>
+            <div class="color-dot" data-color="#10B981" style="background:#10B981" onclick="pickColor('#10B981',this)"></div>
+            <div class="color-dot" data-color="#F97316" style="background:#F97316" onclick="pickColor('#F97316',this)"></div>
+            <div class="color-dot" data-color="#EC4899" style="background:#EC4899" onclick="pickColor('#EC4899',this)"></div>
+            <div class="color-dot" data-color="#3B82F6" style="background:#3B82F6" onclick="pickColor('#3B82F6',this)"></div>
+            <div class="color-dot" data-color="#A855F7" style="background:#A855F7" onclick="pickColor('#A855F7',this)"></div>
+            <div class="color-dot" data-color="#14B8A6" style="background:#14B8A6" onclick="pickColor('#14B8A6',this)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalSubject')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSubject()">Save Subject</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: Add Topic ===== -->
+  <div class="modal-overlay" id="modalTopic">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTopicTitle">Add Topic</h3>
+        <button class="modal-close" onclick="closeModal('modalTopic')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Topic / Chapter Name</label>
+          <input type="text" id="inputTopicName" placeholder="e.g. Chapter 3 — Linked Lists" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Notes or Reference (optional)</label>
+          <textarea id="inputTopicNotes" placeholder="Textbook page, YouTube link, or quick notes…" class="form-input form-textarea" rows="3"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('modalTopic')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveTopic()">Add Topic</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
